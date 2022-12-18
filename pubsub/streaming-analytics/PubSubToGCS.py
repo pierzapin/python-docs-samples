@@ -17,7 +17,8 @@ import argparse
 from datetime import datetime
 import logging
 import random
-
+from apache_beam.metrics import Metrics
+from apache_beam.metrics.metric import MetricsFilter
 from apache_beam import DoFn, GroupByKey, io, ParDo, Pipeline, PTransform, WindowInto, WithKeys
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.window import FixedWindows
@@ -64,10 +65,11 @@ class AddTimestamp(DoFn):
 class WriteToGCS(DoFn):
     def __init__(self, output_path):
         self.output_path = output_path
+        self.batch_counter = Metrics.counter('main', 'total_batches')
 
     def process(self, key_value, window=DoFn.WindowParam):
         """Write messages in a batch to Google Cloud Storage."""
-
+        self.batch_counter.inc()
         ts_format = "%H:%M"
         window_start = window.start.to_utc_datetime().strftime(ts_format)
         window_end = window.end.to_utc_datetime().strftime(ts_format)
