@@ -66,22 +66,21 @@ class WriteToGCS(DoFn):
     def __init__(self, output_path):
         self.output_path = output_path
         self.batch_counter = Metrics.counter('main', 'total_batches')
+    
+    def setup(self):
         self.metric_client = MetricClient(os.environ["NEW_RELIC_INSERT_KEY"])
+        print('setup')
+        
+    def teardown(self):
+        self.metric_client = null
+        print('teardown')
 
     def process(self, key_value, window=DoFn.WindowParam):
         """Write messages in a batch to Google Cloud Storage."""
         self.batch_counter.inc()
-        temperature = GaugeMetric("temperature", 78.6, {"units": "Farenheit"})
+        temperature = GaugeMetric("testing.temperature", 78.6, {"units": "Farenheit"})
 
-        # Record that there have been 5 errors in the last 2 seconds
-        errors = CountMetric(name="errors", value=5, interval_ms=2000)
-
-        # Record a summary of 10 response times over the last 2 seconds
-        summary = SummaryMetric(
-            "responses", count=10, min=0.2, max=0.5, sum=4.7, interval_ms=2000
-        )
-
-        metric_batch = [temperature, errors, summary]
+        metric_batch = [temperature]
         response = metric_client.send_batch(metric_batch)
         response.raise_for_status()
         ts_format = "%H:%M"
