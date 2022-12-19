@@ -81,8 +81,8 @@ class WriteToGCS(DoFn):
             "responses", count=10, min=0.2, max=0.5, sum=4.7, interval_ms=2000
         )
 
-        batch = [temperature, errors, summary]
-        response = metric_client.send_batch(batch)
+        metric_batch = [temperature, errors, summary]
+        response = metric_client.send_batch(metric_batch)
         response.raise_for_status()
         ts_format = "%H:%M"
         window_start = window.start.to_utc_datetime().strftime(ts_format)
