@@ -1,1 +1,2 @@
 apache-beam[gcp,test]==2.42.0
+newrelic-telemetry-sdk==0.4.3
