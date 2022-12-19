@@ -21,7 +21,9 @@ from apache_beam.metrics import Metrics
 from apache_beam import DoFn, GroupByKey, io, ParDo, Pipeline, PTransform, WindowInto, WithKeys
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.window import FixedWindows
-
+import os
+import time
+from newrelic_telemetry_sdk import GaugeMetric, CountMetric, SummaryMetric, MetricClient
 
 class GroupMessagesByFixedWindows(PTransform):
     """A composite transform that groups Pub/Sub messages based on publish time
@@ -65,10 +67,24 @@ class WriteToGCS(DoFn):
     def __init__(self, output_path):
         self.output_path = output_path
         self.batch_counter = Metrics.counter('main', 'total_batches')
+        self.metric_client = MetricClient(os.environ["NEW_RELIC_INSERT_KEY"])
 
     def process(self, key_value, window=DoFn.WindowParam):
         """Write messages in a batch to Google Cloud Storage."""
         self.batch_counter.inc()
+        temperature = GaugeMetric("temperature", 78.6, {"units": "Farenheit"})
+
+        # Record that there have been 5 errors in the last 2 seconds
+        errors = CountMetric(name="errors", value=5, interval_ms=2000)
+
+        # Record a summary of 10 response times over the last 2 seconds
+        summary = SummaryMetric(
+            "responses", count=10, min=0.2, max=0.5, sum=4.7, interval_ms=2000
+        )
+
+        batch = [temperature, errors, summary]
+        response = metric_client.send_batch(batch)
+        response.raise_for_status()
         ts_format = "%H:%M"
         window_start = window.start.to_utc_datetime().strftime(ts_format)
         window_end = window.end.to_utc_datetime().strftime(ts_format)
