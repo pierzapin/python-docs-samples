@@ -22,7 +22,6 @@ from apache_beam import DoFn, GroupByKey, io, ParDo, Pipeline, PTransform, Windo
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.window import FixedWindows
 import os
-import time
 from newrelic_telemetry_sdk import GaugeMetric, CountMetric, SummaryMetric, MetricClient
 
 class GroupMessagesByFixedWindows(PTransform):
